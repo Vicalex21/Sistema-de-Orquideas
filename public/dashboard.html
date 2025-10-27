@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - Sistema de Orquídeas</title>
+
+    <!-- Materialize CSS CDN -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        main {
+            flex: 1 0 auto;
+            padding: 16px;
+        }
+
+        .sensor-badge {
+            font-weight: 600;
+        }
+
+        .card-stats {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .small-muted {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        @media (min-width: 993px) {
+            .grid-2 {
+                display: grid;
+                grid-template-columns: 1fr 420px;
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAV -->
+    <nav class="green darken-2">
+        <div class="nav-wrapper container">
+            <a href="inicio.html" class="brand-logo">Orquídeas 4.0</a>
+            <ul id="nav-mobile" class="right hide-on-med-and-down">
+                <li><a href="#dashboard">Dashboard</a></li>
+                <li><a href="#calendar">Calendario Riego</a></li>
+                <li><a href="#sensors">Sensores</a></li>
+                <li><a href="#history">Histórico</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- Dashboard -->
+        <section id="dashboard">
+            <h5>Dashboard</h5>
+            <div class="row">
+                <div class="col s12 m8">
+                    <div class="card">
+                        <div class="card-content">
+                            <div class="card-stats">
+                                <div>
+                                    <span class="small-muted">Lectura actual</span>
+                                    <h4 id="tempValue">-- °C</h4>
+                                    <p class="small-muted" id="tempRange">Rango ideal: 18°C - 24°C</p>
+                                </div>
+                                <div>
+                                    <span class="small-muted">Humedad</span>
+                                    <h4 id="humValue">-- %</h4>
+                                    <p class="small-muted" id="humIdeal">Ideal ≈ 80%</p>
+                                </div>
+                            </div>
+
+                            <div style="margin-top:18px;">
+                                <a class="btn green darken-2" id="btnRequestSensor">Solicitar lectura</a>
+                                <a class="btn grey" id="btnToggleAuto">Auto-actualización: ON</a>
+                                <span id="lastUpdated" class="small-muted" style="margin-left:12px;">Última
+                                    actualización: --</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chart -->
+                    <div class="card">
+                        <div class="card-content">
+                            <h6>Histórico de Humedad y Temperatura</h6>
+                            <canvas id="historyChart" height="120"></canvas>
+
+                            <div class="input-field" style="margin-top:12px;">
+                                <select id="freqSelect">
+                                    <option value="60">Cada 1 hora</option>
+                                    <option value="30">Cada 30 minutos</option>
+                                    <option value="15">Cada 15 minutos</option>
+                                </select>
+                                <label>Frecuencia de muestreo (simulada)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right column: calendar summary + sensors -->
+                <div class="col s12 m4">
+                    <div class="card">
+                        <div class="card-content">
+                            <h6>Próximo riego</h6>
+                            <p id="nextWater" class="flow-text">No hay riegos programados</p>
+                            <p class="small-muted">Recuerda: puedes programar múltiples riegos en la pestaña Calendario.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-content">
+                            <h6>Sensores</h6>
+                            <p><span class="sensor-badge" id="sensorStatus">No conectados</span></p>
+                            <p class="small-muted">Tipo: <span id="sensorType">—</span></p>
+                            <a class="btn blue modal-trigger" href="#modalSensors">Conectar sensor</a>
+                        </div>
+                    </div>
+
+                    <div class="card grey lighten-4">
+                        <div class="card-content">
+                            <h6>Avisos</h6>
+                            <ul id="alertsList" class="collection">
+                                <!-- avisos dinámicos -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Calendario de riego -->
+        <section id="calendar">
+            <h5>Calendario de Riego</h5>
+            <div class="row">
+                <div class="col s12 m6">
+                    <div class="card">
+                        <div class="card-content">
+                            <h6>Agregar evento de riego</h6>
+                            <div class="input-field">
+                                <input id="waterDate" type="text" class="datepicker">
+                                <label for="waterDate">Fecha</label>
+                            </div>
+                            <div class="input-field">
+                                <input id="waterTime" type="text" class="timepicker">
+                                <label for="waterTime">Hora</label>
+                            </div>
+                            <div class="input-field">
+                                <input id="waterNote" type="text">
+                                <label for="waterNote">Nota (opcional)</label>
+                            </div>
+                            <a class="btn green" id="btnAddWater">Agregar</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col s12 m6">
+                    <div class="card">
+                        <div class="card-content">
+                            <h6>Eventos programados</h6>
+                            <ul id="waterList" class="collection"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sensores -->
+        <section id="sensors">
+            <h5>Sensores</h5>
+            <div class="card">
+                <div class="card-content">
+                    <h6>Administrar conexiones</h6>
+                    <p>En esta versión de prototipo la conexión es simulada. Cuando tengas microcontroladores reales:
+                        ESP32, Arduino + módulo Wi-Fi o BLE, deberás implementar el backend y/o WebBluetooth.</p>
+                    <a class="btn blue modal-trigger" href="#modalSensors">Abrir emparejamiento</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Histórico -->
+        <section id="history">
+            <h5>Histórico</h5>
+            <div class="card">
+                <div class="card-content">
+                    <p>Puedes exportar el histórico a CSV (simulación local) — útil para análisis o para el backend.</p>
+                    <a class="btn" id="btnExportCSV">Exportar CSV</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Sensores -->
+    <div id="modalSensors" class="modal">
+        <div class="modal-content">
+            <h5>Conectar sensores</h5>
+            <p>Selecciona método de conexión</p>
+            <div class="row">
+                <div class="col s12 m6">
+                    <a class="btn fullwidth" id="btnBluetooth">Emparejar via Bluetooth</a>
+                </div>
+                <div class="col s12 m6">
+                    <a class="btn fullwidth" id="btnWifi">Conectar via Wi-Fi</a>
+                </div>
+            </div>
+            <p class="small-muted">En el prototipo, esto simula la conexión y cambiamos el estado en la UI.</p>
+        </div>
+        <div class="modal-footer">
+            <a href="#!" class="modal-close btn-flat">Cerrar</a>
+        </div>
+    </div>
+
+    <!-- Materialize & dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+    <script>
+        // ====== Inicialización Materialize ======
+        document.addEventListener('DOMContentLoaded', function () {
+            var elems = document.querySelectorAll('select');
+            M.FormSelect.init(elems);
+            var elems2 = document.querySelectorAll('.modal');
+            M.Modal.init(elems2);
+            var dp = document.querySelectorAll('.datepicker');
+            M.Datepicker.init(dp, { format: 'yyyy-mm-dd', autoClose: true });
+            var tp = document.querySelectorAll('.timepicker');
+            M.Timepicker.init(tp, { twelveHour: false });
+        });
+
+        // ====== Estado & simulación de datos ======
+        let autoUpdate = true;
+        let sensorConnected = false;
+        let sensorMethod = null; // 'BLE' | 'WiFi'
+        let history = loadHistory() || []; // array of {ts, temp, hum}
+        let wateringEvents = loadWaterings() || []; // array of {id, datetimeISO, note}
+
+        // Chart setup
+        const ctx = document.getElementById('historyChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: history.map(h => new Date(h.ts).toLocaleString()),
+                datasets: [
+                    { label: 'Humedad (%)', data: history.map(h => h.hum), yAxisID: 'y1', tension: 0.2 },
+                    { label: 'Temperatura (°C)', data: history.map(h => h.temp), yAxisID: 'y2', tension: 0.2 }
+                ]
+            },
+            options: {
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    y1: { type: 'linear', position: 'left', suggestedMin: 0, suggestedMax: 100 },
+                    y2: { type: 'linear', position: 'right', suggestedMin: 0, suggestedMax: 40 }
+                }
+            }
+        });
+
+        // Util: formato ISO + minutos
+        function nowISO() { return new Date().toISOString(); }
+
+        // Simula lectura de sensor (cuando no hay sensores reales)
+        function simulateReading() {
+            // generar valores con algo de ruido; ideal 80% hum, 18-24 temp
+            const hum = Math.min(100, Math.round((70 + Math.random() * 20) * 10) / 10);
+            const temp = Math.round((18 + Math.random() * 7) * 10) / 10;
+            const ts = Date.now();
+            return { ts, temp, hum };
+        }
+
+        // Actualiza UI con lectura
+        function updateReading(r) {
+            document.getElementById('tempValue').textContent = r.temp + ' °C';
+            document.getElementById('humValue').textContent = r.hum + ' %';
+            document.getElementById('lastUpdated').textContent = 'Última actualización: ' + new Date(r.ts).toLocaleString();
+
+            // push to history & chart
+            history.push({ ts: r.ts, temp: r.temp, hum: r.hum });
+            if (history.length > 200) history.shift();
+            saveHistory();
+            refreshChart();
+            checkAlerts(r);
+            updateNextWaterUI();
+        }
+
+        // check if humidity out of ideal range and alert
+        function checkAlerts(r) {
+            const alertsList = document.getElementById('alertsList');
+            if (r.hum < 70 || r.hum > 90) {
+                const li = document.createElement('li');
+                li.className = 'collection-item';
+                li.textContent = `[${new Date(r.ts).toLocaleTimeString()}] Humedad fuera de rango: ${r.hum}%`;
+                alertsList.prepend(li);
+            }
+        }
+
+        function refreshChart() {
+            chart.data.labels = history.map(h => new Date(h.ts).toLocaleString());
+            chart.data.datasets[0].data = history.map(h => h.hum);
+            chart.data.datasets[1].data = history.map(h => h.temp);
+            chart.update();
+        }
+
+        // Periodic auto updates (simuladas)
+        let autoTimer = setInterval(() => {
+            if (!autoUpdate) return;
+            const r = simulateReading();
+            updateReading(r);
+        }, 5000); // cada 5s en prototipo para ver cambios rápidamente
+
+        // Botones UI
+        document.getElementById('btnRequestSensor').addEventListener('click', () => {
+            const r = simulateReading();
+            updateReading(r);
+            M.toast({ html: 'Lectura obtenida' });
+        });
+
+        document.getElementById('btnToggleAuto').addEventListener('click', (e) => {
+            autoUpdate = !autoUpdate;
+            e.target.textContent = 'Auto-actualización: ' + (autoUpdate ? 'ON' : 'OFF');
+            M.toast({ html: 'Auto-actualización ' + (autoUpdate ? 'activada' : 'desactivada') });
+        });
+
+        // ====== Calendario de riego (localStorage) ======
+        document.getElementById('btnAddWater').addEventListener('click', () => {
+            const date = document.getElementById('waterDate').value;
+            const time = document.getElementById('waterTime').value;
+            const note = document.getElementById('waterNote').value || '';
+            if (!date || !time) { M.toast({ html: 'Selecciona fecha y hora' }); return; }
+            // combinar a ISO local: "yyyy-mm-dd" + "HH:MM"
+            const iso = new Date(date + 'T' + normalizeTime(time)).toISOString();
+            const id = 'w-' + Date.now();
+            wateringEvents.push({ id, datetimeISO: iso, note });
+            saveWaterings();
+            renderWaterings();
+            M.toast({ html: 'Riego agregado' });
+            updateNextWaterUI();
+        });
+
+        function normalizeTime(t) {
+            // timepicker devuelve "HH:MM" o "H:MM", normalizar
+            const parts = t.split(':');
+            const hh = parts[0].padStart(2, '0');
+            const mm = (parts[1] || '00').padStart(2, '0');
+            return hh + ':' + mm;
+        }
+
+        function renderWaterings() {
+            const ul = document.getElementById('waterList');
+            ul.innerHTML = '';
+            wateringEvents.sort((a, b) => new Date(a.datetimeISO) - new Date(b.datetimeISO));
+            for (const w of wateringEvents) {
+                const li = document.createElement('li');
+                li.className = 'collection-item';
+                li.innerHTML = `<div>
+          <span><strong>${new Date(w.datetimeISO).toLocaleString()}</strong><br><span class="small-muted">${w.note || ''}</span></span>
+          <a href="#!" class="secondary-content btn-flat red-text" data-id="${w.id}"><i class="material-icons">delete</i></a>
+        </div>`;
+                ul.appendChild(li);
+            }
+            // add delete handlers
+            ul.querySelectorAll('.secondary-content').forEach(b => {
+                b.addEventListener('click', (e) => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    wateringEvents = wateringEvents.filter(x => x.id !== id);
+                    saveWaterings();
+                    renderWaterings();
+                    updateNextWaterUI();
+                });
+            });
+        }
+
+        function updateNextWaterUI() {
+            const nextEl = document.getElementById('nextWater');
+            if (!wateringEvents.length) { nextEl.textContent = 'No hay riegos programados'; return; }
+            const next = wateringEvents.slice().sort((a, b) => new Date(a.datetimeISO) - new Date(b.datetimeISO))[0];
+            nextEl.textContent = new Date(next.datetimeISO).toLocaleString() + (next.note ? ' — ' + next.note : '');
+        }
+
+        // check if any watering is due (simple: if time passed within 1 minute)
+        setInterval(() => {
+            const now = Date.now();
+            wateringEvents.forEach(w => {
+                const t = new Date(w.datetimeISO).getTime();
+                if (!w.notified && Math.abs(now - t) < 60000) { // dentro ±1min
+                    sendWaterNotification(w);
+                    w.notified = true; // evitar repetir
+                    saveWaterings();
+                }
+            });
+        }, 10000);
+
+        function sendWaterNotification(w) {
+            if (Notification.permission === 'granted') {
+                new Notification('Hora de regar orquídeas', { body: `Programado: ${new Date(w.datetimeISO).toLocaleString()}` });
+            } else {
+                M.toast({ html: '¡Hora de regar! (permiso de notificaciones no concedido)' });
+            }
+        }
+
+        // pedir permiso para notificaciones al iniciar prototipo
+        if ('Notification' in window) {
+            if (Notification.permission === 'default') {
+                Notification.requestPermission().then(p => {
+                    if (p === 'granted') M.toast({ html: 'Notificaciones permitidas' });
+                });
+            }
+        }
+
+        // ====== Sensores: simulación de emparejamiento ======
+        document.getElementById('btnBluetooth').addEventListener('click', () => {
+            sensorConnected = true; sensorMethod = 'BLE';
+            document.getElementById('sensorStatus').textContent = 'Conectado';
+            document.getElementById('sensorType').textContent = 'Bluetooth';
+            M.Modal.getInstance(document.getElementById('modalSensors')).close();
+            M.toast({ html: 'Sensor emparejado via Bluetooth (simulado)' });
+        });
+        document.getElementById('btnWifi').addEventListener('click', () => {
+            sensorConnected = true; sensorMethod = 'WiFi';
+            document.getElementById('sensorStatus').textContent = 'Conectado';
+            document.getElementById('sensorType').textContent = 'Wi-Fi';
+            M.Modal.getInstance(document.getElementById('modalSensors')).close();
+            M.toast({ html: 'Sensor conectado via Wi-Fi (simulado)' });
+        });
+
+        // Export CSV (simulado)
+        document.getElementById('btnExportCSV').addEventListener('click', () => {
+            if (!history.length) { M.toast({ html: 'No hay datos a exportar' }); return; }
+            const rows = [['timestamp,temp,hum']];
+            history.forEach(h => rows.push([new Date(h.ts).toISOString() + ',' + h.temp + ',' + h.hum]));
+            const csv = rows.flat().join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'historial_orquideas.csv'; a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Frequency selector affects simulated historical point generation (for prototipo)
+        document.getElementById('freqSelect').addEventListener('change', (e) => {
+            // en este prototipo solo mostramos la selección
+            M.toast({ html: 'Frecuencia seleccionada: cada ' + e.target.value + ' minutos (simulado)' });
+        });
+
+        // localStorage helpers
+        function saveHistory() { localStorage.setItem('orch_history', JSON.stringify(history)); }
+        function loadHistory() { try { return JSON.parse(localStorage.getItem('orch_history') || '[]'); } catch (e) { return []; } }
+        function saveWaterings() { localStorage.setItem('orch_waterings', JSON.stringify(wateringEvents)); }
+        function loadWaterings() { try { return JSON.parse(localStorage.getItem('orch_waterings') || '[]'); } catch (e) { return []; } }
+
+        // render initial
+        renderWaterings();
+        refreshChart();
+        updateNextWaterUI();
+
+        // Guardar estado al cerrar pestaña (opcional)
+        window.addEventListener('beforeunload', () => {
+            saveHistory(); saveWaterings();
+        });
+    </script>
+</body>
+
+</html>
