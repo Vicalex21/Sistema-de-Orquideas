@@ -355,38 +355,38 @@
             // ===== FUENTES COLOMBIA (ACTIVADAS) =====
             {
                 id: 'openweather-bogota',
-                name: 'OpenWeather Colombia',
+                name: 'WTTR.in Bogotá',
                 description: 'Estación Meteorológica El Dorado',
                 city: 'Bogotá D.C.',
                 location: 'Aeropuerto El Dorado',
                 coordinates: '4.7110°N, 74.0721°W',
-                provider: 'OpenWeatherMap API',
+                provider: 'WTTR Weather Service',
                 climate: 'tropical-altitude',
                 orchidSuitability: 'alta',
-                url: 'https://api.openweathermap.org/data/2.5/weather?q=Bogota,CO&appid=demo&units=metric',
+                url: 'https://wttr.in/Bogota,Colombia?format=j1',
                 parser: (data) => ({
-                    temp: data.main?.temp || 22,
-                    hum: data.main?.humidity || 70,
-                    pressure: data.main?.pressure || 1013,
-                    condition: data.weather?.[0]?.description || 'Parcialmente nublado'
+                    temp: parseFloat(data.current_condition?.[0]?.temp_C) || 22,
+                    hum: parseFloat(data.current_condition?.[0]?.humidity) || 70,
+                    pressure: parseFloat(data.current_condition?.[0]?.pressure) || 1013,
+                    condition: data.current_condition?.[0]?.weatherDesc?.[0]?.value || 'Parcialmente nublado'
                 })
             },
             {
                 id: 'weatherapi-medellin',
-                name: 'WeatherAPI Medellín', 
+                name: 'WTTR.in Medellín', 
                 description: 'Estación José María Córdova',
                 city: 'Medellín, Antioquia',
                 location: 'Aeropuerto José María Córdova',
                 coordinates: '6.2442°N, 75.5812°W',
-                provider: 'WeatherAPI.com',
+                provider: 'WTTR Weather Service',
                 climate: 'tropical-montano',
                 orchidSuitability: 'muy-alta',
-                url: 'http://api.weatherapi.com/v1/current.json?key=demo&q=Medellin&aqi=no',
+                url: 'https://wttr.in/Medellin,Colombia?format=j1',
                 parser: (data) => ({
-                    temp: data.current?.temp_c || 24,
-                    hum: data.current?.humidity || 75,
-                    pressure: data.current?.pressure_mb || 1015,
-                    condition: data.current?.condition?.text || 'Soleado'
+                    temp: parseFloat(data.current_condition?.[0]?.temp_C) || 24,
+                    hum: parseFloat(data.current_condition?.[0]?.humidity) || 75,
+                    pressure: parseFloat(data.current_condition?.[0]?.pressure) || 1015,
+                    condition: data.current_condition?.[0]?.weatherDesc?.[0]?.value || 'Soleado'
                 })
             },
             {
@@ -411,20 +411,20 @@
             // ===== FUENTES CHILE (ACTIVAS) =====
             {
                 id: 'chile-openweather',
-                name: 'OpenWeather Chile',
+                name: 'WTTR.in Santiago',
                 description: 'Estación Meteorológica Pudahuel',
                 city: 'Santiago de Chile',
                 location: 'Aeropuerto Arturo Merino Benítez',
                 coordinates: '33.3928°S, 70.7856°W',
-                provider: 'OpenWeatherMap Chile',
+                provider: 'WTTR Weather Service Chile',
                 climate: 'mediterraneo',
                 orchidSuitability: 'media',
-                url: 'https://api.openweathermap.org/data/2.5/weather?q=Santiago,CL&appid=demo&units=metric',
+                url: 'https://wttr.in/Santiago,Chile?format=j1',
                 parser: (data) => ({
-                    temp: data.main?.temp || 18,
-                    hum: data.main?.humidity || 65,
-                    pressure: data.main?.pressure || 1020,
-                    condition: data.weather?.[0]?.description || 'Despejado'
+                    temp: parseFloat(data.current_condition?.[0]?.temp_C) || 18,
+                    hum: parseFloat(data.current_condition?.[0]?.humidity) || 65,
+                    pressure: parseFloat(data.current_condition?.[0]?.pressure) || 1020,
+                    condition: data.current_condition?.[0]?.weatherDesc?.[0]?.value || 'Despejado'
                 })
             },
             {
@@ -447,20 +447,20 @@
             },
             {
                 id: 'chile-concepcion',
-                name: 'OpenWeather Concepción',
+                name: 'WTTR.in Concepción',
                 description: 'Estación Meteorológica Concepción',
                 city: 'Concepción, Chile',
                 location: 'Aeropuerto Carriel Sur',
                 coordinates: '36.7726°S, 73.0631°W',
-                provider: 'OpenWeatherMap Chile Sur',
+                provider: 'WTTR Weather Service Chile Sur',
                 climate: 'oceanico',
                 orchidSuitability: 'media-baja',
-                url: 'https://api.openweathermap.org/data/2.5/weather?q=Concepcion,CL&appid=demo&units=metric',
+                url: 'https://wttr.in/Concepcion,Chile?format=j1',
                 parser: (data) => ({
-                    temp: data.main?.temp || 14,
-                    hum: data.main?.humidity || 78,
-                    pressure: data.main?.pressure || 1016,
-                    condition: data.weather?.[0]?.description || 'Parcialmente nublado'
+                    temp: parseFloat(data.current_condition?.[0]?.temp_C) || 14,
+                    hum: parseFloat(data.current_condition?.[0]?.humidity) || 78,
+                    pressure: parseFloat(data.current_condition?.[0]?.pressure) || 1016,
+                    condition: data.current_condition?.[0]?.weatherDesc?.[0]?.value || 'Parcialmente nublado'
                 })
             },
             
@@ -485,38 +485,38 @@
             },
             {
                 id: 'ushuaia',
-                name: 'OpenWeather Ushuaia',
+                name: 'WTTR.in Ushuaia',
                 description: 'Estación Meteorológica Ushuaia',
                 city: 'Ushuaia, Argentina',
                 location: 'Aeropuerto Malvinas Argentinas',
                 coordinates: '54.8433°S, 68.2968°W',
-                provider: 'OpenWeatherMap Argentina',
+                provider: 'WTTR Weather Service Argentina',
                 climate: 'subantartico',
                 orchidSuitability: 'muy-baja',
-                url: 'https://api.openweathermap.org/data/2.5/weather?q=Ushuaia,AR&appid=demo&units=metric',
+                url: 'https://wttr.in/Ushuaia,Argentina?format=j1',
                 parser: (data) => ({
-                    temp: data.main?.temp || 6,
-                    hum: data.main?.humidity || 88,
-                    pressure: data.main?.pressure || 1000,
-                    condition: data.weather?.[0]?.description || 'Nublado y frío'
+                    temp: parseFloat(data.current_condition?.[0]?.temp_C) || 6,
+                    hum: parseFloat(data.current_condition?.[0]?.humidity) || 88,
+                    pressure: parseFloat(data.current_condition?.[0]?.pressure) || 1000,
+                    condition: data.current_condition?.[0]?.weatherDesc?.[0]?.value || 'Nublado y frío'
                 })
             },
             {
                 id: 'puerto-montt',
-                name: 'OpenWeather Puerto Montt',
+                name: 'WTTR.in Puerto Montt',
                 description: 'Estación Meteorológica Puerto Montt',
                 city: 'Puerto Montt, Chile',
                 location: 'Aeropuerto El Tepual',
                 coordinates: '41.4693°S, 73.0938°W',
-                provider: 'OpenWeatherMap Chile Sur',
+                provider: 'WTTR Weather Service Chile Sur',
                 climate: 'oceanico-templado',
                 orchidSuitability: 'baja',
-                url: 'https://api.openweathermap.org/data/2.5/weather?q=Puerto_Montt,CL&appid=demo&units=metric',
+                url: 'https://wttr.in/Puerto_Montt,Chile?format=j1',
                 parser: (data) => ({
-                    temp: data.main?.temp || 12,
-                    hum: data.main?.humidity || 82,
-                    pressure: data.main?.pressure || 1010,
-                    condition: data.weather?.[0]?.description || 'Lluvia ligera'
+                    temp: parseFloat(data.current_condition?.[0]?.temp_C) || 12,
+                    hum: parseFloat(data.current_condition?.[0]?.humidity) || 82,
+                    pressure: parseFloat(data.current_condition?.[0]?.pressure) || 1010,
+                    condition: data.current_condition?.[0]?.weatherDesc?.[0]?.value || 'Lluvia ligera'
                 })
             }
         ];
@@ -571,13 +571,23 @@
             document.getElementById('realDataStatus').textContent = `📡 Conectando a ${currentSource.city}...`;
             
             try {
-                const response = await fetch(currentSource.url);
+                console.log(`🌐 Consultando: ${currentSource.url}`);
+                
+                const response = await fetch(currentSource.url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                    mode: 'cors'
+                });
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
+                    throw new Error(`HTTP ${response.status} - ${response.statusText}`);
                 }
                 
                 const data = await response.json();
+                console.log(`✅ Datos recibidos de ${currentSource.city}:`, data);
+                
                 const parsed = currentSource.parser(data);
                 
                 if (!parsed.temp || !parsed.hum) {
@@ -618,12 +628,21 @@
                 return dataToCache;
                 
             } catch (error) {
-                console.log(`Error obteniendo datos de ${currentSource.city}:`, error.message);
+                console.error(`❌ Error obteniendo datos de ${currentSource.city}:`, {
+                    error: error.message,
+                    url: currentSource.url,
+                    provider: currentSource.provider
+                });
+                
+                // Mostrar error específico para debugging
+                document.getElementById('realDataStatus').innerHTML = 
+                    `<span style="color: #ff5722;">❌ Error: ${error.message} - ${currentSource.city}</span>`;
                 
                 // Usar datos de respaldo SOLO si la fuente actual falla
                 M.toast({ 
-                    html: `⚠️ Error en ${currentSource.city}, usando datos simulados`,
-                    classes: 'orange'
+                    html: `⚠️ API error en ${currentSource.city}: ${error.message}`,
+                    classes: 'red',
+                    displayLength: 6000
                 });
                 
                 return await getFallbackData();
