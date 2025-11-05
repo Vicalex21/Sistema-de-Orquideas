@@ -553,104 +553,125 @@
 
 
 
-        // Obtener datos REALES de múltiples fuentes
+        // Obtener datos REALES de la fuente ACTUAL seleccionada
         async function getRealIoTData() {
-            // Verificar cache primero
-            const cachedData = getCachedData('realData');
+            // Verificar cache primero para la fuente actual
+            const cacheKey = `realData_${currentSource.id}`;
+            const cachedData = getCachedData(cacheKey);
             if (cachedData) {
-                console.log('Usando datos del cache (estables por 15 minutos)');
+                console.log(`Usando datos del cache para ${currentSource.city} (estables por 15 minutos)`);
                 document.getElementById('realDataStatus').textContent = '💾 Datos del cache (estables)';
                 
-                // Actualizar UI con datos del cache
-                updateRealDataUI(cachedData.temperature, cachedData.humidity, cachedData.timestamp, cachedData.condition);
+                // Actualizar UI con datos del cache SIN cambiar la fuente
+                updateRealDataUI(cachedData.temperature, cachedData.humidity, cachedData.timestamp, cachedData.condition, false);
                 return cachedData;
             }
             
-            document.getElementById('realDataStatus').textContent = '📡 Conectando a fuentes meteorológicas...';
+            console.log(`Obteniendo datos de: ${currentSource.name} (${currentSource.city})`);
+            document.getElementById('realDataStatus').textContent = `📡 Conectando a ${currentSource.city}...`;
             
-            // Intentar múltiples fuentes hasta encontrar una que funcione
-            for (let i = 0; i < DATA_SOURCES.length; i++) {
-                try {
-                    currentSource = DATA_SOURCES[sourceIndex % DATA_SOURCES.length];
-                    sourceIndex++;
-                    
-                    console.log(`Intentando fuente: ${currentSource.name}`);
-                    document.getElementById('realDataStatus').textContent = `📡 Conectando a ${currentSource.name}...`;
-                    
-                    const response = await fetch(currentSource.url);
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
-                    
-                    const data = await response.json();
-                    const parsed = currentSource.parser(data);
-                    
-                    if (!parsed.temp || !parsed.hum) {
-                        throw new Error('Datos incompletos');
-                    }
-                    
-                    const timestamp = new Date();
-                    const temperature = Number(parsed.temp.toFixed(1));
-                    const humidity = Number(parsed.hum.toFixed(1));
-                    const condition = parsed.condition || '';
-                    
-                    // Actualizar UI con datos REALES
-                    updateRealDataUI(temperature, humidity, timestamp, condition);
-                    
-                    // Guardar en cache para mantener estabilidad
-                    const dataToCache = { temperature, humidity, timestamp, condition };
-                    setCachedData('realData', dataToCache);
-                    
-                    // Añadir al gráfico principal
-                    const realReading = {
-                        ts: timestamp.getTime(),
-                        temp: temperature,
-                        hum: humidity,
-                        source: currentSource.id
-                    };
-                    
-                    history.push(realReading);
-                    if (history.length > 200) history.shift();
-                    saveHistory();
-                    refreshChart();
-                    
-                    // Actualizar también los valores principales
-                    document.getElementById('tempValue').textContent = temperature.toFixed(1) + ' °C';
-                    document.getElementById('humValue').textContent = humidity.toFixed(1) + ' %';
-                    document.getElementById('lastUpdated').textContent = 
-                        `Última actualización: ${timestamp.toLocaleString()} (${currentSource.name})`;
-                    
-                    return dataToCache;
-                    
-                } catch (error) {
-                    console.log(`Error en ${currentSource.name}:`, error.message);
-                    if (i === DATA_SOURCES.length - 1) {
-                        // Si todas las APIs fallan, usar datos de respaldo
-                        return await getFallbackData();
-                    }
-                    // Continuar con la siguiente fuente
+            try {
+                const response = await fetch(currentSource.url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
                 }
+                
+                const data = await response.json();
+                const parsed = currentSource.parser(data);
+                
+                if (!parsed.temp || !parsed.hum) {
+                    throw new Error('Datos incompletos');
+                }
+                
+                const timestamp = new Date();
+                const temperature = Number(parsed.temp.toFixed(1));
+                const humidity = Number(parsed.hum.toFixed(1));
+                const condition = parsed.condition || '';
+                
+                // Actualizar UI con datos REALES SIN cambiar la fuente
+                updateRealDataUI(temperature, humidity, timestamp, condition, false);
+                
+                // Guardar en cache específico para esta ubicación
+                const dataToCache = { temperature, humidity, timestamp, condition };
+                setCachedData(cacheKey, dataToCache);
+                
+                // Añadir al gráfico principal
+                const realReading = {
+                    ts: timestamp.getTime(),
+                    temp: temperature,
+                    hum: humidity,
+                    source: currentSource.id
+                };
+                
+                history.push(realReading);
+                if (history.length > 200) history.shift();
+                saveHistory();
+                refreshChart();
+                
+                // Actualizar también los valores principales
+                document.getElementById('tempValue').textContent = temperature.toFixed(1) + ' °C';
+                document.getElementById('humValue').textContent = humidity.toFixed(1) + ' %';
+                document.getElementById('lastUpdated').textContent = 
+                    `Última actualización: ${timestamp.toLocaleString()} (${currentSource.city})`;
+                
+                return dataToCache;
+                
+            } catch (error) {
+                console.log(`Error obteniendo datos de ${currentSource.city}:`, error.message);
+                
+                // Usar datos de respaldo SOLO si la fuente actual falla
+                M.toast({ 
+                    html: `⚠️ Error en ${currentSource.city}, usando datos simulados`,
+                    classes: 'orange'
+                });
+                
+                return await getFallbackData();
             }
                 
         }
 
-        // Función de respaldo mejorada con datos realistas
+        // Función de respaldo mejorada con datos realistas basados en la ubicación actual
         async function getFallbackData() {
-            // Verificar cache para datos de respaldo también
-            const cachedFallback = getCachedData('fallbackData');
+            const fallbackCacheKey = `fallback_${currentSource.id}`;
+            
+            // Verificar cache para datos de respaldo de esta ubicación específica
+            const cachedFallback = getCachedData(fallbackCacheKey);
             if (cachedFallback) {
-                console.log('Usando datos de respaldo del cache (estables)');
-                document.getElementById('realDataStatus').textContent = '🔄 Datos simulados (estables por 15 min)';
-                updateRealDataUI(cachedFallback.temperature, cachedFallback.humidity, cachedFallback.timestamp, cachedFallback.condition);
+                console.log(`Usando datos simulados del cache para ${currentSource.city}`);
+                document.getElementById('realDataStatus').textContent = `🔄 Datos simulados de ${currentSource.city} (cache)`;
+                updateRealDataUI(cachedFallback.temperature, cachedFallback.humidity, cachedFallback.timestamp, cachedFallback.condition, false);
                 return cachedFallback;
             }
             
-            console.log('Generando nuevos datos de respaldo realistas');
+            console.log(`Generando datos simulados realistas para ${currentSource.city}`);
             
-            // Simular datos basados en patrones reales de orquídeas
-            const baseTemp = 22; // Temperatura base ideal para orquídeas
-            const baseHum = 70;   // Humedad base ideal para orquídeas
+            // Simular datos basados en el clima de la ubicación actual
+            let baseTemp = 22; // Temperatura base
+            let baseHum = 70;   // Humedad base
+            
+            // Ajustar datos base según la ubicación y clima
+            switch (currentSource.climate) {
+                case 'tropical-montano':
+                case 'tropical-altitude':
+                    baseTemp = 22; baseHum = 75; break;
+                case 'tropical-seco':
+                    baseTemp = 26; baseHum = 65; break;
+                case 'mediterraneo':
+                    baseTemp = 18; baseHum = 60; break;
+                case 'mediterraneo-costero':
+                    baseTemp = 16; baseHum = 70; break;
+                case 'oceanico':
+                    baseTemp = 14; baseHum = 78; break;
+                case 'oceanico-templado':
+                    baseTemp = 12; baseHum = 82; break;
+                case 'subpolar-oceanico':
+                    baseTemp = 8; baseHum = 85; break;
+                case 'subantartico':
+                    baseTemp = 6; baseHum = 88; break;
+                default:
+                    baseTemp = 20; baseHum = 70;
+            }
             
             // Variación basada en hora del día (más realista)
             const hour = new Date().getHours();
@@ -658,28 +679,20 @@
             const humVariation = Math.cos((hour - 12) / 24 * 2 * Math.PI) * 10; // ±10% variación diaria
             
             const temperature = Number((baseTemp + tempVariation).toFixed(1));
-            const humidity = Number((baseHum + humVariation).toFixed(1));
+            const humidity = Math.max(10, Math.min(100, Number((baseHum + humVariation).toFixed(1)))); // Limitar entre 10-100%
             const timestamp = new Date();
             
-            // Actualizar UI con datos de respaldo
-            currentSource = {
-                id: 'fallback-realistic',
-                name: 'Datos Simulados Realistas',
-                description: 'Simulación basada en patrones reales',
-                city: 'Sistema Local',
-                location: 'Generador de datos realistas',
-                coordinates: 'N/A',
-                provider: 'Sistema Interno'
-            };
+            // NO cambiar currentSource - mantener la ubicación seleccionada
+            const condition = `Simulación realista para ${currentSource.city}`;
             
-            updateRealDataUI(temperature, humidity, timestamp, 'Simulación realista');
+            updateRealDataUI(temperature, humidity, timestamp, condition, false);
             
             // Añadir al gráfico
             const realReading = {
                 ts: timestamp.getTime(),
                 temp: temperature,
                 hum: humidity,
-                source: 'fallback-realistic'
+                source: currentSource.id + '_simulated'
             };
             
             history.push(realReading);
@@ -691,17 +704,17 @@
             document.getElementById('tempValue').textContent = temperature.toFixed(1) + ' °C';
             document.getElementById('humValue').textContent = humidity.toFixed(1) + ' %';
             document.getElementById('lastUpdated').textContent = 
-                `Última actualización: ${timestamp.toLocaleString()} (Datos Realistas)`;
+                `Última actualización: ${timestamp.toLocaleString()} (${currentSource.city} - Simulado)`;
             
-            // Guardar datos de respaldo en cache para mantener estabilidad
-            const fallbackData = { temperature, humidity, timestamp, condition: 'Simulación realista' };
-            setCachedData('fallbackData', fallbackData);
+            // Guardar datos de respaldo en cache específico para esta ubicación
+            const fallbackData = { temperature, humidity, timestamp, condition };
+            setCachedData(fallbackCacheKey, fallbackData);
             
             return fallbackData;
         }
 
         // Actualizar UI con datos reales
-        function updateRealDataUI(temp, hum, timestamp, condition = '') {
+        function updateRealDataUI(temp, hum, timestamp, condition = '', updateSelector = true) {
             // Panel principal de datos
             document.getElementById('iotTemp').textContent = temp.toFixed(1) + '°C';
             document.getElementById('iotHumidity').textContent = hum.toFixed(1) + '%';
@@ -718,15 +731,15 @@
             
             if (isCachedData) {
                 statusIcon = '💾';
-                statusText = 'Datos del cache (estables por 15 minutos)';
+                statusText = `Datos del cache de ${currentSource.city} (estables por 15 min)`;
                 statusColor = '#FF9800'; // Naranja
             } else if (isRealData) {
                 statusIcon = '📡';
-                statusText = 'Datos meteorológicos reales en tiempo real';
+                statusText = `Datos meteorológicos reales de ${currentSource.city}`;
                 statusColor = '#4CAF50'; // Verde
             } else {
                 statusIcon = '🔄';
-                statusText = 'Datos simulados realistas (APIs no disponibles)';
+                statusText = `Datos simulados para ${currentSource.city} (API no disponible)`;
                 statusColor = '#2196F3'; // Azul
             }
             
@@ -788,11 +801,13 @@
             document.getElementById('currentOrchidSuitability').textContent = 
                 `Adecuación para orquídeas: ${suitabilityElement.textContent}`;
             
-            // Actualizar el selector
-            const selector = document.getElementById('locationSelector');
-            if (selector) {
-                selector.value = currentSource.id;
-                M.FormSelect.init(selector);
+            // SOLO actualizar el selector si es un cambio manual (no automático)
+            if (updateSelector) {
+                const selector = document.getElementById('locationSelector');
+                if (selector) {
+                    selector.value = currentSource.id;
+                    M.FormSelect.init(selector);
+                }
             }
 
             // Agregar al historial de consultas
@@ -924,10 +939,10 @@
         function changeDataSource(sourceId) {
             const newSource = DATA_SOURCES.find(source => source.id === sourceId);
             if (newSource) {
+                const previousCity = currentSource.city;
                 currentSource = newSource;
                 
-                // Limpiar cache para forzar nuevos datos
-                dataCache = {};
+                console.log(`Cambiando de ${previousCity} a ${currentSource.city}`);
                 
                 // Actualizar UI inmediatamente con información de la nueva ubicación
                 document.getElementById('currentLocationName').textContent = currentSource.city;
@@ -948,14 +963,17 @@
                 document.getElementById('currentOrchidSuitability').textContent = 
                     `Adecuación para orquídeas: ${suitabilityText}`;
                 
+                // Limpiar datos anteriores del display
+                document.getElementById('iotTemp').textContent = '--°C';
+                document.getElementById('iotHumidity').textContent = '--%';
+                document.getElementById('realDataStatus').textContent = `🔄 Preparando datos de ${currentSource.city}...`;
+                
                 M.toast({ 
                     html: `📍 Ubicación cambiada a: ${currentSource.city}`,
                     classes: 'purple darken-2'
                 });
                 
-                console.log(`Fuente cambiada a: ${currentSource.name} (${currentSource.city})`);
-                
-                // Opcional: Obtener datos inmediatamente después del cambio
+                // Obtener datos de la nueva ubicación inmediatamente
                 setTimeout(() => {
                     getRealIoTData();
                 }, 500);
@@ -1012,6 +1030,9 @@
             }
             document.getElementById('currentOrchidSuitability').textContent = 
                 `Adecuación para orquídeas: ${suitabilityText}`;
+                
+            // Estado inicial
+            document.getElementById('realDataStatus').textContent = `🌐 Ubicación: ${currentSource.city} - Presiona un botón para obtener datos`;
         }, 100);
 
         // Guardar estado al cerrar pestaña
