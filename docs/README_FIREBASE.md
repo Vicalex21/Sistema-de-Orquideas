@@ -17,14 +17,14 @@ Prototipo web para el **Calendario de Riego** usando **Firebase Firestore** (sin
 4. Sigue los pasos (puedes desactivar Google Analytics)
 5. Una vez creado, haz clic en el ícono **Web** (`</>`)
 6. Registra tu app con el nombre `Sistema Orquideas Web`
-7. **Copia** las credenciales de configuración
+7. **Copia** las credenciales de configuración (en mi caso es el archivo donde quiero que funcione x funcionalidad por ej: los correos salen de calendario.html)
 
 ### Paso 2: Configurar Firestore
 
 1. En Firebase Console, ve a **Build → Firestore Database**
 2. Haz clic en **"Crear base de datos"**
 3. Selecciona **"Comenzar en modo de prueba"** (para desarrollo)
-4. Selecciona una ubicación (ej: `us-central`)
+4. Selecciona una ubicación (ej: `us-central`) o Santiago
 5. Haz clic en **Crear**
 
 ### Paso 3: Configurar el proyecto
