@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Historial de Lecturas - Sistema de Orquídeas</title>
+
+    <!-- Materialize CSS CDN -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <style>
+        body {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        main {
+            flex: 1 0 auto;
+            padding: 16px;
+        }
+
+        .table-container {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .loading-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAV -->
+    <nav class="green darken-2">
+        <div class="nav-wrapper container">
+            <a href="inicio.html" class="brand-logo">Orquídeas 4.0</a>
+            <ul id="nav-mobile" class="right hide-on-med-and-down">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="historial.html" class="active">Historial</a></li>
+                <li><a href="calendario.html">Calendario</a></li>
+                <li><a href="inicio.html">Inicio</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section id="historial">
+            <h4>📊 Historial de Lecturas</h4>
+            <p class="grey-text">Datos de temperatura y humedad guardados en Firebase</p>
+
+            <!-- Filtro Simple -->
+            <div class="row">
+                <div class="col s12">
+                    <div class="card">
+                        <div class="card-content">
+                            <h6>🔍 Buscar por Ubicación</h6>
+                            <div class="row">
+                                <div class="col s12 m8">
+                                    <div class="input-field">
+                                        <select id="filterLocation">
+                                            <option value="" selected>Todas las ubicaciones</option>
+                                        </select>
+                                        <label>Seleccionar Ubicación</label>
+                                    </div>
+                                </div>
+                                <div class="col s12 m4">
+                                    <div style="padding-top: 20px;">
+                                        <a class="btn green waves-effect btn-block" id="btnApplyFilter">
+                                            <i class="material-icons left">search</i>
+                                            Buscar
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Datos -->
+            <div class="row">
+                <div class="col s12">
+                    <div class="card">
+                        <div class="card-content">
+                            <h6>📋 Lecturas Registradas (<span id="totalCount">0</span>)</h6>
+                            <div class="table-container">
+                                <table class="striped highlight responsive-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha y Hora</th>
+                                            <th>Ubicación</th>
+                                            <th>Temperatura</th>
+                                            <th>Humedad</th>
+                                            <th>Clima</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dataTableBody">
+                                        <tr>
+                                            <td colspan="5">
+                                                <div class="loading-container">
+                                                    <div class="preloader-wrapper active">
+                                                        <div class="spinner-layer spinner-green-only">
+                                                            <div class="circle-clipper left">
+                                                                <div class="circle"></div>
+                                                            </div>
+                                                            <div class="gap-patch">
+                                                                <div class="circle"></div>
+                                                            </div>
+                                                            <div class="circle-clipper right">
+                                                                <div class="circle"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Materialize & dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // ✅ Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBS08DWc0BtI0y6Ud81s6uN-znZlPfPx6g",
+            authDomain: "sistema-orquideas.firebaseapp.com",
+            projectId: "sistema-orquideas",
+            storageBucket: "sistema-orquideas.firebasestorage.app",
+            messagingSenderId: "662215481633",
+            appId: "1:662215481633:web:4ef51ec3322ee43ed74660"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Variables globales
+        let allReadings = [];
+
+        // Inicializar Materialize
+        document.addEventListener('DOMContentLoaded', function () {
+            M.AutoInit();
+            loadData();
+        });
+
+        // Cargar datos de Firebase
+        async function loadData() {
+            try {
+                console.log('📡 Cargando datos de Firebase...');
+                
+                const q = query(collection(db, 'lecturas'), orderBy('fecha', 'desc'));
+                const querySnapshot = await getDocs(q);
+                
+                allReadings = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    allReadings.push({
+                        id: doc.id,
+                        ...data,
+                        fechaJS: data.fecha.toDate()
+                    });
+                });
+
+                console.log(`✅ ${allReadings.length} lecturas cargadas`);
+                
+                updateTable();
+                populateLocationFilter();
+                
+            } catch (error) {
+                console.error('❌ Error cargando datos:', error);
+                M.toast({ html: 'Error cargando datos de Firebase', classes: 'red' });
+                
+                document.getElementById('dataTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="5" class="center-align red-text">
+                            Error al cargar los datos. Por favor, verifica tu conexión.
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Actualizar tabla
+        function updateTable(filteredData = null) {
+            const data = filteredData || allReadings;
+            const tbody = document.getElementById('dataTableBody');
+            const totalCount = document.getElementById('totalCount');
+
+            totalCount.textContent = data.length;
+
+            if (data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="center-align grey-text">
+                            No hay lecturas disponibles
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = data.map(reading => `
+                <tr>
+                    <td>${reading.fechaJS.toLocaleString('es-ES')}</td>
+                    <td><strong>${reading.ubicacion || 'N/A'}</strong></td>
+                    <td class="blue-text"><strong>${reading.temperatura.toFixed(1)}°C</strong></td>
+                    <td class="teal-text"><strong>${reading.humedad.toFixed(1)}%</strong></td>
+                    <td>${reading.clima || 'N/A'}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Poblar filtro de ubicaciones
+        function populateLocationFilter() {
+            const locations = [...new Set(allReadings.map(r => r.ubicacion))].sort();
+            const select = document.getElementById('filterLocation');
+            
+            locations.forEach(loc => {
+                const option = document.createElement('option');
+                option.value = loc;
+                option.textContent = loc;
+                select.appendChild(option);
+            });
+
+            M.FormSelect.init(select);
+        }
+
+        // Aplicar filtro
+        document.getElementById('btnApplyFilter').addEventListener('click', () => {
+            const location = document.getElementById('filterLocation').value;
+
+            if (!location) {
+                updateTable();
+                M.toast({ html: 'Mostrando todas las ubicaciones', classes: 'blue' });
+                return;
+            }
+
+            const filtered = allReadings.filter(r => r.ubicacion === location);
+            updateTable(filtered);
+            M.toast({ html: `${filtered.length} lecturas encontradas en ${location}`, classes: 'green' });
+        });
+
+    </script>
+</body>
+
+</html>

@@ -60,6 +60,7 @@
             <a href="inicio.html" class="brand-logo">Orquídeas 4.0</a>
             <ul id="nav-mobile" class="right hide-on-med-and-down">
                 <li><a href="#dashboard">Dashboard</a></li>
+                <li><a href="historial.html">Historial</a></li>
                 <li><a href="calendario.html">Calendario</a></li>
                 <li><a href="inicio.html">Inicio</a></li>
             </ul>
@@ -281,6 +282,32 @@
 
     <!-- Materialize & dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, Timestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // ✅ Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBS08DWc0BtI0y6Ud81s6uN-znZlPfPx6g",
+            authDomain: "sistema-orquideas.firebaseapp.com",
+            projectId: "sistema-orquideas",
+            storageBucket: "sistema-orquideas.firebasestorage.app",
+            messagingSenderId: "662215481633",
+            appId: "1:662215481633:web:4ef51ec3322ee43ed74660"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Hacer db disponible globalmente
+        window.firebaseDB = db;
+        window.firebaseAddDoc = addDoc;
+        window.firebaseCollection = collection;
+        window.firebaseTimestamp = Timestamp;
+    </script>
 
     <script>
         // ====== Inicialización Materialize ======
@@ -856,6 +883,41 @@
             
             saveQueryHistory();
             updateHistoryDisplay();
+            
+            // Guardar en Firebase
+            saveToFirebase(temp, hum, timestamp);
+        }
+
+        // Función para guardar datos en Firebase
+        async function saveToFirebase(temp, hum, timestamp) {
+            try {
+                // Esperar a que Firebase esté inicializado
+                if (!window.firebaseDB) {
+                    console.log('Firebase aún no está inicializado, esperando...');
+                    setTimeout(() => saveToFirebase(temp, hum, timestamp), 500);
+                    return;
+                }
+
+                const lecturaData = {
+                    temperatura: temp,
+                    humedad: hum,
+                    fecha: window.firebaseTimestamp.fromDate(timestamp),
+                    ubicacion: currentSource.city,
+                    estacion: currentSource.description,
+                    clima: currentSource.climate || 'no-especificado',
+                    coordenadas: currentSource.coordinates,
+                    proveedor: currentSource.provider
+                };
+
+                const docRef = await window.firebaseAddDoc(
+                    window.firebaseCollection(window.firebaseDB, 'lecturas'),
+                    lecturaData
+                );
+
+                console.log('✅ Datos guardados en Firebase con ID:', docRef.id);
+            } catch (error) {
+                console.error('❌ Error guardando en Firebase:', error);
+            }
         }
 
         // Actualizar display del historial
