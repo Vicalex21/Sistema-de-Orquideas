@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistema de Riego - Sistema de Orquídeas</title>
+
+    <!-- Materialize CSS CDN -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <style>
+        body {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        main {
+            flex: 1 0 auto;
+            padding: 16px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAV -->
+    <nav class="green darken-2">
+        <div class="nav-wrapper container">
+            <a href="inicio.html" class="brand-logo">Orquídeas 4.0</a>
+            <ul id="nav-mobile" class="right hide-on-med-and-down">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="historial.html">Historial</a></li>
+                <li><a href="riego.html" class="active">Riego</a></li>
+                <li><a href="calendario.html">Calendario</a></li>
+                <li><a href="inicio.html">Inicio</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section id="riego">
+            <h4 class="center-align">💧 Sistema de Riego Automático Local</h4>
+            <p class="grey-text center-align">Control y monitoreo simulado del sistema de riego</p>
+
+            <!-- Sección Principal -->
+            <div class="row" style="margin-top: 30px;">
+                <div class="col s12">
+                    <div class="card" style="background: linear-gradient(135deg, #66bb6a 0%, #43a047 100%);">
+                        <div class="card-content white-text">
+                            <h5 class="center-align">💧 Sistema de Riego Local Simulado</h5>
+                            <p class="center-align" style="opacity: 0.9;">Actualización automática cada 3 segundos</p>
+                            
+                            <div class="row" style="margin-top: 30px;">
+                                <!-- Panel de Valores Actuales -->
+                                <div class="col s12 m6">
+                                    <div class="card white">
+                                        <div class="card-content">
+                                            <h6 class="green-text center-align">📊 Valores Actuales del Sistema</h6>
+                                            <div class="row" style="margin-top: 20px;">
+                                                <div class="col s6 center-align">
+                                                    <i class="material-icons large blue-text">device_thermostat</i>
+                                                    <h4 id="localTemp" class="blue-text">--°C</h4>
+                                                    <p class="grey-text">Temperatura</p>
+                                                </div>
+                                                <div class="col s6 center-align">
+                                                    <i class="material-icons large teal-text">opacity</i>
+                                                    <h4 id="localHum" class="teal-text">--%</h4>
+                                                    <p class="grey-text">Humedad</p>
+                                                </div>
+                                            </div>
+                                            <div class="divider"></div>
+                                            <div class="center-align" style="margin-top: 15px;">
+                                                <span class="grey-text">
+                                                    <i class="material-icons tiny">access_time</i>
+                                                    Última actualización: <span id="localLastUpdate">--</span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Panel de Control -->
+                                <div class="col s12 m6">
+                                    <div class="card white">
+                                        <div class="card-content">
+                                            <h6 class="green-text center-align">🎮 Control del Sistema</h6>
+                                            <div class="center-align" style="margin-top: 20px;">
+                                                <div id="localStatus" class="card-panel grey lighten-4">
+                                                    <span class="grey-text">Sistema Detenido</span>
+                                                </div>
+                                                
+                                                <a class="btn-large green waves-effect waves-light" id="btnStartRiego" style="margin: 10px;">
+                                                    <i class="material-icons left">play_arrow</i>
+                                                    Iniciar Riego
+                                                </a>
+                                                
+                                                <a class="btn-large red waves-effect waves-light" id="btnStopRiego" style="margin: 10px; display: none;">
+                                                    <i class="material-icons left">stop</i>
+                                                    Detener Riego
+                                                </a>
+                                                
+                                                <div class="card-panel green lighten-5" style="margin-top: 20px;">
+                                                    <p class="green-text">
+                                                        <i class="material-icons tiny">info</i>
+                                                        El sistema actualiza los valores cada 3 segundos
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Indicadores de Estado -->
+                            <div class="row">
+                                <div class="col s12">
+                                    <div class="card white">
+                                        <div class="card-content">
+                                            <h6 class="green-text center-align">📈 Estado del Ambiente</h6>
+                                            <div class="row">
+                                                <div class="col s12 m4">
+                                                    <div class="center-align">
+                                                        <span id="tempStatus" class="badge grey">Esperando...</span>
+                                                        <p class="grey-text" style="margin-top: 10px;">Estado de Temperatura</p>
+                                                    </div>
+                                                </div>
+                                                <div class="col s12 m4">
+                                                    <div class="center-align">
+                                                        <span id="humStatus" class="badge grey">Esperando...</span>
+                                                        <p class="grey-text" style="margin-top: 10px;">Estado de Humedad</p>
+                                                    </div>
+                                                </div>
+                                                <div class="col s12 m4">
+                                                    <div class="center-align">
+                                                        <span id="riegoCounter" class="badge green">0</span>
+                                                        <p class="grey-text" style="margin-top: 10px;">Actualizaciones</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Materialize & dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, Timestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // ✅ Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBS08DWc0BtI0y6Ud81s6uN-znZlPfPx6g",
+            authDomain: "sistema-orquideas.firebaseapp.com",
+            projectId: "sistema-orquideas",
+            storageBucket: "sistema-orquideas.firebasestorage.app",
+            messagingSenderId: "662215481633",
+            appId: "1:662215481633:web:4ef51ec3322ee43ed74660"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Hacer db disponible globalmente
+        window.firebaseDB = db;
+        window.firebaseAddDoc = addDoc;
+        window.firebaseCollection = collection;
+        window.firebaseTimestamp = Timestamp;
+    </script>
+
+    <script>
+        // Inicialización Materialize
+        document.addEventListener('DOMContentLoaded', function () {
+            M.AutoInit();
+        });
+
+        // ============================================
+        // SISTEMA DE RIEGO LOCAL SIMULADO
+        // ============================================
+        let riegoInterval = null;
+        let riegoActive = false;
+        let riegoUpdateCount = 0;
+        let localTemperature = 22.0;
+        let localHumidity = 70.0;
+
+        // Función para simular cambios en temperatura y humedad
+        function simulateLocalEnvironment() {
+            // Variación aleatoria realista
+            const tempChange = (Math.random() - 0.5) * 2; // ±1°C
+            const humChange = (Math.random() - 0.5) * 10; // ±5%
+
+            // Aplicar cambios con límites realistas
+            localTemperature = Math.max(15, Math.min(35, localTemperature + tempChange));
+            localHumidity = Math.max(40, Math.min(95, localHumidity + humChange));
+
+            // Actualizar UI
+            document.getElementById('localTemp').textContent = localTemperature.toFixed(1) + '°C';
+            document.getElementById('localHum').textContent = localHumidity.toFixed(1) + '%';
+            document.getElementById('localLastUpdate').textContent = new Date().toLocaleTimeString();
+
+            // Actualizar contador
+            riegoUpdateCount++;
+            document.getElementById('riegoCounter').textContent = riegoUpdateCount;
+
+            // Actualizar estado de temperatura
+            const tempBadge = document.getElementById('tempStatus');
+            if (localTemperature < 18) {
+                tempBadge.className = 'badge blue';
+                tempBadge.textContent = '❄️ Frío';
+            } else if (localTemperature > 26) {
+                tempBadge.className = 'badge red';
+                tempBadge.textContent = '🔥 Caliente';
+            } else {
+                tempBadge.className = 'badge green';
+                tempBadge.textContent = '✅ Óptimo';
+            }
+
+            // Actualizar estado de humedad
+            const humBadge = document.getElementById('humStatus');
+            if (localHumidity < 60) {
+                humBadge.className = 'badge orange';
+                humBadge.textContent = '💧 Baja';
+            } else if (localHumidity > 80) {
+                humBadge.className = 'badge blue';
+                humBadge.textContent = '💦 Alta';
+            } else {
+                humBadge.className = 'badge green';
+                humBadge.textContent = '✅ Óptimo';
+            }
+
+            // Guardar en Firebase
+            if (window.firebaseDB) {
+                saveLocalReadingToFirebase(localTemperature, localHumidity);
+            }
+        }
+
+        // Función para guardar lecturas locales en Firebase
+        async function saveLocalReadingToFirebase(temp, hum) {
+            try {
+                if (!window.firebaseDB) return;
+
+                const lecturaData = {
+                    temperatura: temp,
+                    humedad: hum,
+                    fecha: window.firebaseTimestamp.fromDate(new Date()),
+                    ubicacion: 'Sistema Local de Riego',
+                    estacion: 'Sensor Local Simulado',
+                    clima: 'ambiente-controlado',
+                    coordenadas: 'Local',
+                    proveedor: 'Sistema de Riego Automático'
+                };
+
+                await window.firebaseAddDoc(
+                    window.firebaseCollection(window.firebaseDB, 'lecturas'),
+                    lecturaData
+                );
+
+                console.log('✅ Lectura local guardada en Firebase');
+            } catch (error) {
+                console.error('❌ Error guardando lectura local:', error);
+            }
+        }
+
+        // Iniciar sistema de riego
+        function startLocalRiego() {
+            if (riegoActive) return;
+
+            riegoActive = true;
+            riegoUpdateCount = 0;
+
+            // Actualizar UI
+            document.getElementById('btnStartRiego').style.display = 'none';
+            document.getElementById('btnStopRiego').style.display = 'inline-block';
+            document.getElementById('localStatus').className = 'card-panel green lighten-4';
+            document.getElementById('localStatus').innerHTML = '<span class="green-text"><i class="material-icons tiny">check_circle</i> Sistema Activo - Monitoreando ambiente</span>';
+
+            // Primera actualización inmediata
+            simulateLocalEnvironment();
+
+            // Actualizar cada 3 segundos
+            riegoInterval = setInterval(simulateLocalEnvironment, 3000);
+
+            M.toast({ 
+                html: '🚿 Sistema de riego local iniciado - Actualizando cada 3 segundos', 
+                classes: 'green',
+                displayLength: 4000
+            });
+        }
+
+        // Detener sistema de riego
+        function stopLocalRiego() {
+            if (!riegoActive) return;
+
+            riegoActive = false;
+
+            // Detener intervalo
+            if (riegoInterval) {
+                clearInterval(riegoInterval);
+                riegoInterval = null;
+            }
+
+            // Actualizar UI
+            document.getElementById('btnStartRiego').style.display = 'inline-block';
+            document.getElementById('btnStopRiego').style.display = 'none';
+            document.getElementById('localStatus').className = 'card-panel grey lighten-4';
+            document.getElementById('localStatus').innerHTML = '<span class="grey-text"><i class="material-icons tiny">pause_circle</i> Sistema Detenido</span>';
+
+            M.toast({ 
+                html: '⏹️ Sistema de riego local detenido', 
+                classes: 'orange',
+                displayLength: 3000
+            });
+        }
+
+        // Event listeners para botones de riego
+        document.getElementById('btnStartRiego').addEventListener('click', startLocalRiego);
+        document.getElementById('btnStopRiego').addEventListener('click', stopLocalRiego);
+
+    </script>
+</body>
+
+</html>
